@@ -1,0 +1,24 @@
+digraph Matrix {
+node[shape = "box"];
+"Nodo__"[label = "Usuarios", group="root"];
+"Nodo__" -> "Nodo__Guatemala" [dir=both];
+"Nodo__" -> "Nodo_Max_" [dir=both];
+"Nodo__Guatemala"[label = "Guatemala", group="column"]
+"Nodo__Guatemala" -> "Nodo__Jalapa" [dir=both];
+"Nodo__Guatemala" -> "Nodo_Max_Guatemala" [dir=both];
+"Nodo__Jalapa"[label = "Jalapa", group="column"]
+"Nodo__Jalapa" -> "Nodo_SpaceX_Jalapa" [dir=both];
+{rank=same; "Nodo__"; "Nodo__Guatemala"; "Nodo__Jalapa"}
+"Nodo_Max_"[label = "Max", group="row"]
+"Nodo_Max_" -> "Nodo_Max_Guatemala" [dir=both];
+"Nodo_Max_" -> "Nodo_SpaceX_" [dir=both];
+"Nodo_Max_Guatemala"[label = "[Daniel]"]
+"Nodo_Max_Guatemala" -> "Nodo_SpaceX_Guatemala" [dir=both];
+{rank=same; "Nodo_Max_"; "Nodo_Max_Guatemala"}
+"Nodo_SpaceX_"[label = "SpaceX", group="row"]
+"Nodo_SpaceX_" -> "Nodo_SpaceX_Guatemala" [dir=both];
+"Nodo_SpaceX_Guatemala"[label = "[Juanito]"]
+"Nodo_SpaceX_Guatemala" -> "Nodo_SpaceX_Jalapa" [dir=both];
+"Nodo_SpaceX_Jalapa"[label = "[Fatys, Emily]"]
+{rank=same; "Nodo_SpaceX_"; "Nodo_SpaceX_Guatemala"; "Nodo_SpaceX_Jalapa"}
+}

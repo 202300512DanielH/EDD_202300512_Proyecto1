@@ -1,0 +1,3 @@
+C:/Users/danie.000/Documents/EDD_P/Proyecto_1/cmake-build-debug/CMakeFiles/Proyecto_1.dir
+C:/Users/danie.000/Documents/EDD_P/Proyecto_1/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/danie.000/Documents/EDD_P/Proyecto_1/cmake-build-debug/CMakeFiles/rebuild_cache.dir

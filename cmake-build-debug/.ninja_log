@@ -1,0 +1,13 @@
+# ninja log v6
+6	1035	7551496239074366	CMakeFiles/Proyecto_1.dir/MatrizDispersa.cpp.obj	69b33d4f9c7663c2
+5	571	7551414692030646	CMakeFiles/Proyecto_1.dir/main.cpp.obj	967b58110e726b2c
+1035	1179	7551496249363328	Proyecto_1.exe	b871ea4a67075665
+18	704	7551413752166241	CMakeFiles/Proyecto_1.dir/Usuario.cpp.obj	2c3a6b0bd79ab500
+7	556	7555186353095180	build.ninja	de6ac5f3ec647c5f
+16	718	7555194644083490	CMakeFiles/Proyecto_1.dir/Usuario.cpp.obj	2c3a6b0bd79ab500
+6	710	7555194875123999	CMakeFiles/Proyecto_1.dir/main.cpp.obj	967b58110e726b2c
+711	1012	7555194882178428	Proyecto_1.exe	288992a5efd3c852
+6	760	7555200749765249	CMakeFiles/Proyecto_1.dir/main.cpp.obj	967b58110e726b2c
+761	907	7555200757306121	Proyecto_1.exe	288992a5efd3c852
+5	758	7555202624344331	CMakeFiles/Proyecto_1.dir/main.cpp.obj	967b58110e726b2c
+758	897	7555202631869292	Proyecto_1.exe	288992a5efd3c852

@@ -70,10 +70,84 @@ public:
             insertarEnFila(nuevoNodo, fila);
             insertarEnColumna(nuevoNodo, columna);
         } else {
-            // Insertar en el eje Z si ya existe el nodo
-            insertarEnEjeZ(nodoExistente, user);
+            // Validar si el nombre de usuario ya existe en el eje Z
+            Nodo* actual = nodoExistente;
+            while (actual) {
+                if (actual->user && actual->user->nombreUsuario == user->nombreUsuario) {
+                    std::cout << "Error: El usuario '" << user->nombreUsuario
+                              << "' ya existe en el departamento '" << departamento
+                              << "' de la empresa '" << empresa << "'.\n";
+                    return; // No se permite la inserción
+                }
+                actual = actual->siguiente;
+            }
+
+            // Preguntar al usuario dónde insertar en el eje Z
+            char posicion;
+            std::cout << "¿Insertar usuario al frente (F) o atrás (A)?: ";
+            std::cin >> posicion;
+            bool insertarAdelante = (posicion == 'F' || posicion == 'f');
+
+            // Insertar en el eje Z según la elección del usuario
+            insertarEnEjeZ(nodoExistente, user, insertarAdelante);
         }
     }
+
+    //Buscar Usuario, para poder accerder al Login
+
+    Usuario* buscarUsuario(const string& nombreUsuario, const string& contrasena) {
+        if (!raiz) return nullptr; // Matriz vacía
+
+        Nodo* fila = raiz->abajo;
+        while (fila) { // Recorrer todas las filas
+            Nodo* nodoActual = fila->derecha;
+            while (nodoActual) { // Recorrer todas las columnas
+                Nodo* zNodo = nodoActual;
+                while (zNodo) { // Recorrer eje Z
+                    if (zNodo->user && zNodo->user->nombreUsuario == nombreUsuario) {
+                        // Validar contraseña
+                        if (zNodo->user->contrasena == contrasena) {
+                            return zNodo->user; // Usuario encontrado
+                        } else {
+                            std::cout << "Contraseña incorrecta para el usuario '" << nombreUsuario << "'.\n";
+                            return nullptr; // Usuario encontrado pero contraseña incorrecta
+                        }
+                    }
+                    zNodo = zNodo->siguiente;
+                }
+                nodoActual = nodoActual->derecha;
+            }
+            fila = fila->abajo;
+        }
+        std::cout << "El usuario '" << nombreUsuario << "' no existe.\n";
+        return nullptr; // Usuario no encontrado
+    }
+
+    //Buscar Usuario por nombre, para poder agregar activos
+    Usuario* buscarUsuarioPorNombre(const string& nombreUsuario) const {
+        if (!raiz) return nullptr; // Matriz vacía
+
+        Nodo* fila = raiz->abajo;
+        while (fila) { // Recorrer todas las filas
+            Nodo* nodoActual = fila->derecha;
+            while (nodoActual) { // Recorrer todas las columnas
+                Nodo* zNodo = nodoActual;
+                while (zNodo) { // Recorrer eje Z
+                    if (zNodo->user && zNodo->user->getNombreUsuario() == nombreUsuario) {
+                        return zNodo->user; // Usuario encontrado
+                    }
+                    zNodo = zNodo->siguiente;
+                }
+                nodoActual = nodoActual->derecha;
+            }
+            fila = fila->abajo;
+        }
+        return nullptr; // Usuario no encontrado
+    }
+
+
+
+
 
 
     Nodo* buscarNodo(const string& empresa, const string& departamento) {
@@ -192,21 +266,27 @@ public:
         nuevoNodo->arriba = actual;
     }
 
-    void insertarEnEjeZ(Nodo* nodoBase, Usuario* user) {
-        Nodo* actual = nodoBase;
-
-        // Recorrer la lista enlazada del eje Z hasta el final
-        while (actual->siguiente) {
-            actual = actual->siguiente;
+    void insertarEnEjeZ(Nodo* nodoBase, Usuario* user, bool insertarAdelante) {
+        if (insertarAdelante) {
+            // Insertar al frente
+            Nodo* nuevoNodoZ = new Nodo(nodoBase->i, nodoBase->j, user);
+            nuevoNodoZ->siguiente = nodoBase->siguiente;
+            if (nodoBase->siguiente) {
+                nodoBase->siguiente->anterior = nuevoNodoZ;
+            }
+            nodoBase->siguiente = nuevoNodoZ;
+        } else {
+            // Insertar al final
+            Nodo* actual = nodoBase;
+            while (actual->siguiente) {
+                actual = actual->siguiente;
+            }
+            Nodo* nuevoNodoZ = new Nodo(nodoBase->i, nodoBase->j, user);
+            actual->siguiente = nuevoNodoZ;
+            nuevoNodoZ->anterior = actual;
         }
-
-        // Crear un nuevo nodo en el eje Z
-        Nodo* nuevoNodoZ = new Nodo(nodoBase->i, nodoBase->j, user);
-
-        // Conectar el nuevo nodo al final de la lista del eje Z
-        actual->siguiente = nuevoNodoZ;
-        nuevoNodoZ->anterior = actual;
     }
+
 
     void imprimir() const {
         if (!raiz) {
@@ -254,60 +334,187 @@ public:
         }
     }
 
-   void graph() const {
+    void agregarActivoAUsuario(const std::string& nombreUsuario, const Activo& activo) {
+        Usuario* usuario = buscarUsuarioPorNombre(nombreUsuario);
+        if (!usuario) {
+            std::cout << "Usuario no encontrado: " << nombreUsuario << std::endl;
+            return;
+        }
+
+        usuario->getActivosAVL().insert(activo);
+        std::cout << "Activo agregado exitosamente al usuario " << nombreUsuario << std::endl;
+    }
+
+    bool eliminarUsuario(const std::string& nombreUsuario) {
+    if (!raiz) return false; // Matriz vacía
+
+    Nodo* fila = raiz->abajo;
+    while (fila) { // Recorrer todas las filas
+        Nodo* nodoActual = fila->derecha;
+        while (nodoActual) { // Recorrer todas las columnas
+            Nodo* zNodo = nodoActual;
+            while (zNodo) { // Recorrer eje Z
+                if (zNodo->user && zNodo->user->getNombreUsuario() == nombreUsuario) {
+                    // Desconectar del eje Z
+                    if (zNodo->anterior) {
+                        zNodo->anterior->siguiente = zNodo->siguiente;
+                    }
+                    if (zNodo->siguiente) {
+                        zNodo->siguiente->anterior = zNodo->anterior;
+                    }
+
+                    // Si el nodo es el principal de la celda
+                    if (zNodo == nodoActual) {
+                        if (zNodo->siguiente) {
+                            nodoActual = zNodo->siguiente; // Actualizar al siguiente nodo en Z
+                            nodoActual->anterior = nullptr; // Elimina referencia al nodo eliminado
+                        } else {
+                            Nodo* arriba = zNodo->arriba;
+                            Nodo* abajo = zNodo->abajo;
+                            Nodo* izquierda = zNodo->izquierda;
+                            Nodo* derecha = zNodo->derecha;
+
+                            // Desconectar de la matriz principal
+                            if (arriba) arriba->abajo = abajo;
+                            if (abajo) abajo->arriba = arriba;
+                            if (izquierda) izquierda->derecha = derecha;
+                            if (derecha) derecha->izquierda = izquierda;
+
+                            if (!arriba && !izquierda) {
+                                raiz = nullptr; // Si era la última celda, actualiza la raíz
+                            }
+                        }
+                    }
+
+                    // Liberar memoria del usuario y del nodo
+                    delete zNodo->user;
+                    delete zNodo;
+
+                    std::cout << "Usuario eliminado exitosamente.\n";
+                    return true;
+                }
+                zNodo = zNodo->siguiente;
+            }
+            nodoActual = nodoActual->derecha;
+        }
+        fila = fila->abajo;
+    }
+
+    std::cout << "Usuario '" << nombreUsuario << "' no encontrado.\n";
+    return false; // Usuario no encontrado
+}
+    bool modificarUsuario(const std::string& nombreUsuario, const std::string& nuevoNombreCompleto, const std::string& nuevaContrasena) {
+        if (!raiz) return false; // Matriz vacía
+
+        Nodo* fila = raiz->abajo;
+        while (fila) { // Recorrer todas las filas
+            Nodo* nodoActual = fila->derecha;
+            while (nodoActual) { // Recorrer todas las columnas
+                Nodo* zNodo = nodoActual;
+                while (zNodo) { // Recorrer eje Z
+                    if (zNodo->user && zNodo->user->getNombreUsuario() == nombreUsuario) {
+                        // Modificar los datos del usuario
+                        zNodo->user->setNombreCompleto(nuevoNombreCompleto);
+                        zNodo->user->setContrasena(nuevaContrasena);
+
+                        std::cout << "Usuario modificado exitosamente:\n";
+                        std::cout << "Nuevo Nombre Completo: " << zNodo->user->getNombreCompleto() << "\n";
+                        std::cout << "Nueva Contraseña: " << zNodo->user->getContrasena() << "\n";
+                        return true;
+                    }
+                    zNodo = zNodo->siguiente;
+                }
+                nodoActual = nodoActual->derecha;
+            }
+            fila = fila->abajo;
+        }
+
+        std::cout << "Usuario '" << nombreUsuario << "' no encontrado.\n";
+        return false; // Usuario no encontrado
+    }
+
+
+
+    void listarUsuarios() const {
+        if (!raiz) {
+            std::cout << "No hay usuarios registrados.\n";
+            return;
+        }
+
+        std::cout << "Usuarios registrados:\n";
+        Nodo* fila = raiz->abajo;
+        while (fila) { // Recorrer todas las filas
+            Nodo* nodoActual = fila->derecha;
+            while (nodoActual) { // Recorrer todas las columnas
+                Nodo* zNodo = nodoActual;
+                while (zNodo) { // Recorrer eje Z
+                    if (zNodo->user) {
+                        std::cout << "- " << zNodo->user->getNombreUsuario() << "\n";
+                    }
+                    zNodo = zNodo->siguiente;
+                }
+                nodoActual = nodoActual->derecha;
+            }
+            fila = fila->abajo;
+        }
+    }
+
+    void graficarActivosDeUsuario(const std::string& nombreUsuario) const {
+        Usuario* usuario = buscarUsuarioPorNombre(nombreUsuario);
+        if (!usuario) {
+            std::cout << "Usuario '" << nombreUsuario << "' no encontrado.\n";
+            return;
+        }
+
+        std::cout << "Generando reporte de activos del usuario '" << nombreUsuario << "'...\n";
+        std::string filename = "activos_" + nombreUsuario;
+        usuario->getActivosAVL().graph(filename); // Llama al método `graph` del AVL
+        std::cout << "Reporte generado: " << filename << ".png\n";
+    }
+
+
+
+
+void graph() const {
     ofstream file("matrix.dot");
 
     file << "digraph Matrix {" << endl;
     file << "node[shape = \"box\"];" << endl;
 
-    // Recorrer filas para generar nodos y conexiones
     Nodo* filaAux = raiz;
     while (filaAux) {
         string rank = "{rank=same";
         Nodo* columnaAux = filaAux;
 
         while (columnaAux) {
-            // Generar nombre único para el nodo
             string name = "\"Nodo_" + columnaAux->i + "_" + columnaAux->j + "\"";
             string nodeDec;
 
-            // Nodo raíz
             if (filaAux == raiz && columnaAux == raiz) {
                 nodeDec = name + "[label = \"Usuarios\", group=\"root\"];";
-            }
-            // Encabezado de columna (departamento)
-            else if (filaAux == raiz) {
+            } else if (filaAux == raiz) {
                 nodeDec = name + "[label = \"" + columnaAux->j + "\", group=\"column\"]";
-            }
-            // Encabezado de fila (empresa)
-            else if (columnaAux == filaAux) {
+            } else if (columnaAux == filaAux) {
                 nodeDec = name + "[label = \"" + columnaAux->i + "\", group=\"row\"]";
-            }
-            // Nodo de la matriz
-            else {
-                string content = "[";
-                Nodo* zNodo = columnaAux;
-                while (zNodo) {
-                    content += zNodo->user->nombreUsuario;
-                    if (zNodo->siguiente) {
-                        content += ", ";
-                    }
-                    zNodo = zNodo->siguiente;
+            } else {
+                // Muestra el primer usuario en el eje Z o el usuario en el nodo actual
+                string content = "";
+                if (columnaAux->user) {
+                    content = columnaAux->user->nombreUsuario; // Usuario del nodo actual
                 }
-                content += "]";
+                if (columnaAux->siguiente && columnaAux->siguiente->user) {
+                    content = columnaAux->siguiente->user->nombreUsuario; // Usuario al frente en el eje Z
+                }
                 nodeDec = name + "[label = \"" + content + "\"]";
             }
 
-            // Escribir nodo en el archivo DOT
             file << nodeDec << endl;
 
-            // Generar conexiones horizontales
             if (columnaAux->derecha) {
                 string nextName = "\"Nodo_" + columnaAux->derecha->i + "_" + columnaAux->derecha->j + "\"";
                 file << name << " -> " << nextName << " [dir=both];" << endl;
             }
 
-            // Generar conexiones verticales
             if (columnaAux->abajo) {
                 string belowName = "\"Nodo_" + columnaAux->abajo->i + "_" + columnaAux->abajo->j + "\"";
                 file << name << " -> " << belowName << " [dir=both];" << endl;
@@ -324,7 +531,6 @@ public:
     file << "}" << endl;
     file.close();
 
-    // Generar imagen con Graphviz
     int result = system("dot -Tpng matrix.dot -o matrix.png");
     if (result != 0) {
         cout << "Ocurrió un error al generar la imagen." << endl;

@@ -824,6 +824,17 @@ public:
         return false;
     }
 
+    void listarActivosRentadosDelUsuario(const std::string& nombreUsuario) const {
+        Usuario* usuario = buscarUsuarioPorNombre(nombreUsuario);
+        if (!usuario) {
+            std::cout << "Usuario '" << nombreUsuario << "' no encontrado.\n";
+            return;
+        }
+
+        usuario->listarMisActivosRentados();
+    }
+
+
 
 
 

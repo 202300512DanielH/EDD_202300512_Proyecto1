@@ -367,6 +367,30 @@ public:
         printDisponiblesRec(node->right);
     }
 
+    void listarActivosRentados() const {
+        if (!root) {
+            std::cout << "No hay activos registrados.\n";
+            return;
+        }
+        std::cout << "Activos actualmente rentados:\n";
+        listarRentadosRec(root);
+    }
+
+    void listarRentadosRec(AVLNode* node) const {
+        if (!node) return;
+
+        listarRentadosRec(node->left); // Recorre la izquierda
+
+        if (node->activo.estaRentado()) {
+            std::cout << "ID: " << node->activo.getID()
+                      << ", Nombre: " << node->activo.getNombre()
+                      << ", Tiempo restante: " << node->activo.getTiempo() << " dias\n";
+        }
+
+        listarRentadosRec(node->right); // Recorre la derecha
+    }
+
+
 
 };
 

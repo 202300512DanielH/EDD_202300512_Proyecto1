@@ -41,6 +41,7 @@ public:
     void setDepartamento(const std::string& depto) { departamento = depto; }
     void setEmpresa(const std::string& emp) { empresa = emp; }
 
+
     // Método para imprimir información del usuario
     void imprimirInfo() const {
         std::cout << "Nombre de Usuario: " << nombreUsuario << std::endl;
@@ -48,6 +49,12 @@ public:
         std::cout << "Departamento: " << departamento << std::endl;
         std::cout << "Empresa: " << empresa << std::endl;
     }
+    //Para que el usuario pueda enlistarsus activos
+    void listarMisActivosRentados() const {
+        std::cout << "=== Activos Rentados Pertenecientes a " << nombreUsuario << " ===\n";
+        activosAVL.listarActivosRentados();
+    }
+
 };
 
 #endif // USUARIO_H

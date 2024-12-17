@@ -349,8 +349,11 @@ int main() {
                             matriz.devolverActivo(usuarioActual->getNombreUsuario(), idActivo);
                             break;
                     }
-
-
+                    case 6: { // Nueva opción para listar activos rentados propios
+                            std::cout << "=== Ver Activos Propios Rentados ===\n";
+                            matriz.listarActivosRentadosDelUsuario(usuarioActual->getNombreUsuario());
+                            break;
+                    }
 
                     case 7:
                             std::cout << "Saliendo del menú usuario...\n";

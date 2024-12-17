@@ -28,6 +28,12 @@ private:
 public:
     DoublyCircular() : head(nullptr), tail(nullptr) {}
 
+    // Método getter en DoublyCircular
+    Node* getHead() const {
+        return head;
+    }
+
+
     void append(const Transaccion& value) {
         Node* newNode = new Node(value);
         if (head == nullptr) {
@@ -108,46 +114,53 @@ public:
         cout << "head" << endl;
     }
 
-    void graph() {
-        ofstream file("graph.dot");
-        file << "digraph G {" << endl;
-        file << "rankdir=LR;" << endl; // Horizontal
-        file << "node [shape=record];" << endl;
-
-        Node* current = head;
-        int id = 0;
-        if (head != nullptr) {
-            do {
-                file << "node" << id << " [label=\"{" << current->data.getIdTransaccion() << "}\"]" << ";" << endl;
-                if (current->next != head) {
-                    file << "node" << id << " -> node" << (id + 1) << " [dir=both];" << endl;
-                }
-                current = current->next;
-                id++;
-            } while (current != head);
-            // Conexión del último nodo con el primero
-            file << "node" << (id - 1) << " -> node0 [dir=both];" << endl;
+    void graph(const std::string& filename) {
+        if (!head) {
+            std::cout << "No hay transacciones registradas para generar el reporte.\n";
+            return;
         }
 
-        file << "}" << endl;
-        file.close();
-
-        // Renderizar usando Graphviz
-        string command = "dot -Tpng graph.dot -o graph.png";
-        system(command.c_str());
-    }
-
-    ~DoublyCircular() {
-        if (head == nullptr) return;
+        std::ofstream file(filename + ".dot");
+        file << "digraph Transacciones {\n";
+        file << "    rankdir=LR;\n"; // Configuración para graficar en línea horizontal
+        file << "    node [shape=record, style=filled, fillcolor=lightblue];\n";
 
         Node* current = head;
-        Node* next;
+        int index = 0;
+
+        // Crear nodos
         do {
-            next = current->next;
-            delete current;
-            current = next;
+            file << "    node" << index << " [label=\""
+                 << "ID: " << current->data.getIdTransaccion() << "\\n"
+                 << "Activo: " << current->data.getIdActivo() << "\\n"
+                 << "Usuario: " << current->data.getNombreUsuario() << "\\n"
+                 << "Depto: " << current->data.getDepartamento() << "\\n"
+                 << "Empresa: " << current->data.getEmpresa() << "\\n"
+                 << "Fecha: " << current->data.getFechaTransaccion() << "\\n"
+                 << "Tiempo: " << current->data.getTiempoRenta() << " días\\n"
+                 << "Tipo: " << current->data.getTipoTransaccion() << "\"];\n";
+            current = current->next;
+            index++;
         } while (current != head);
+
+        // Crear conexiones
+        for (int i = 0; i < index; ++i) {
+            file << "    node" << i << " -> node" << (i + 1) % index << " [dir=both];\n";
+        }
+
+        file << "}\n";
+        file.close();
+
+        // Generar la imagen usando Graphviz
+        std::string dotCommand = "dot -Tpng " + filename + ".dot -o " + filename + ".png";
+        int result = system(dotCommand.c_str());
+        if (result != 0) {
+            std::cerr << "Error al generar el reporte de transacciones.\n";
+        } else {
+            std::cout << "Reporte de transacciones generado exitosamente: " << filename << ".png\n";
+        }
     }
+
 };
 
 #endif // LISTA_CIRCULAR_DOBLEENLAZADA_H

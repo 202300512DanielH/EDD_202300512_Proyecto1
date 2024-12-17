@@ -24,7 +24,7 @@ struct AVLNode {
 };
 
 class AVL {
-private:
+public:
     AVLNode* root = nullptr;
 
     // Inserción recursiva
@@ -159,10 +159,32 @@ private:
         return current;
     }
 
-public:
+    // Método privado para buscar un nodo por ID
+    AVLNode* searchNode(AVLNode* node, const std::string& id) const {
+        if (!node) return nullptr; // Si el nodo es nulo, retornar nullptr
+
+        if (id == node->activo.getID()) {
+            return node; // Nodo encontrado
+        } else if (id < node->activo.getID()) {
+            return searchNode(node->left, id); // Buscar en el subárbol izquierdo
+        } else {
+            return searchNode(node->right, id); // Buscar en el subárbol derecho
+        }
+    }
+
+
+
     void remove(const std::string& id) {
         Activo activoEliminado;
         bool encontrado = false;
+
+        // Buscar el activo antes de eliminarlo
+        AVLNode* node = searchNode(root, id);
+        if (node && node->activo.estaRentado()) {
+            std::cout << "No puedes eliminar un activo que está actualmente rentado.\n";
+            return;
+        }
+
         root = deleteRec(root, id, activoEliminado, encontrado);
 
         if (encontrado) {
@@ -170,8 +192,6 @@ public:
             std::cout << "ID: " << activoEliminado.getID() << "\n";
             std::cout << "Nombre: " << activoEliminado.getNombre() << "\n";
             std::cout << "Descripcion: " << activoEliminado.getDescripcion() << "\n";
-            std::cout << "Tiempo: " << activoEliminado.getTiempo() << "\n";
-
         } else {
             std::cout << "Activo con ID " << id << " no encontrado.\n";
         }
@@ -186,24 +206,33 @@ public:
     }
 
     // Método para imprimir el árbol en formato .dot
-    void printRec(AVLNode* node, const string& nodeName, ofstream& file, int& nodeCount) const {
+    void graphRec(AVLNode* node, std::ofstream& file, const std::string& prefix, int& nodeCount) const {
         if (!node) return;
 
-        string leftChild = "Nodo" + to_string(++nodeCount);
-        string rightChild = "Nodo" + to_string(++nodeCount);
+        // Determinar el color del nodo en función de si el activo está rentado o no
+        std::string nodeColor = node->activo.estaRentado() ? "red" : "green";
 
-        file << "\"" << nodeName << "\" [label=\"" << node->activo.getNombre() << "\n" << node->activo.getID() << "\"]\n";
+        // Crear el nombre y etiqueta del nodo
+        std::string nodeName = prefix + "_Nodo" + std::to_string(++nodeCount);
+        file << nodeName << " [label=\"{ "
+             << node->activo.getNombre() << " | "
+             << node->activo.getID() << " }\", style=filled, fillcolor="
+             << nodeColor << "];\n";
 
+        // Generar los nodos hijos (izquierda y derecha) y sus conexiones
         if (node->left) {
-            file << "\"" << nodeName << "\" -> \"" << leftChild << "\";\n";
-            printRec(node->left, leftChild, file, nodeCount);
+            std::string leftChild = prefix + "_Nodo" + std::to_string(nodeCount + 1);
+            file << nodeName << " -> " << leftChild << ";\n";
+            graphRec(node->left, file, prefix, nodeCount);
         }
 
         if (node->right) {
-            file << "\"" << nodeName << "\" -> \"" << rightChild << "\";\n";
-            printRec(node->right, rightChild, file, nodeCount);
+            std::string rightChild = prefix + "_Nodo" + std::to_string(nodeCount + 1);
+            file << nodeName << " -> " << rightChild << ";\n";
+            graphRec(node->right, file, prefix, nodeCount);
         }
     }
+
 
 public:
     void insert(const Activo& activo) {
@@ -211,30 +240,38 @@ public:
     }
 
     // Método para graficar el árbol AVL
+    // Sobrecarga: Método `graph` para un único argumento (para usuarios individuales)
     void graph(const std::string& filename) const {
-        std::string dotFilename = filename + ".dot";
-        std::string pngFilename = filename + ".png";
-        std::string dotCommand = "dot -Tpng " + dotFilename + " -o " + pngFilename;
+        std::ofstream file(filename + ".dot");
+        if (!file) {
+            std::cerr << "Error al crear el archivo DOT\n";
+            return;
+        }
 
-        std::ofstream file(dotFilename);
         file << "digraph AVL {\n";
-        file << "node [shape=record];\n";
+
 
         if (root) {
             int nodeCount = 0;
-            printRec(root, "Nodo" + std::to_string(++nodeCount), file, nodeCount);
+            graphRec(root, file, "Nodo", nodeCount);
+        } else {
+            file << "empty [label=\"(Sin activos)\", shape=plaintext];\n";
         }
 
         file << "}\n";
         file.close();
 
+        // Crear la imagen PNG
+        std::string dotCommand = "dot -Tpng " + filename + ".dot -o " + filename + ".png";
         int result = system(dotCommand.c_str());
         if (result != 0) {
-            std::cerr << "Error generando el reporte de activos.\n";
+            std::cerr << "Error al generar la imagen.\n";
         } else {
-            std::cout << "Imagen generada exitosamente: " << pngFilename << "\n";
+            std::cout << "Reporte generado exitosamente: " << filename << ".png\n";
         }
     }
+
+
 
 
     void printInOrder(AVLNode* node) const {
@@ -277,8 +314,58 @@ public:
         return false;
     }
 
+    bool isEmpty() const {
+        return root == nullptr;
+    }
+    const AVLNode* getRoot() const {
+        return root;
+    }
 
 
+
+    void generarSubgrafoAVL(std::ofstream& file, const AVL& avl, const std::string& prefix) const {
+        if (avl.isEmpty()) { // Comprueba si el AVL está vacío
+            file << prefix << "_empty [label=\"(Sin activos)\", shape=plaintext];\n";
+            return;
+        }
+
+        int nodeCount = 0;
+        graficarNodosAVL(file, avl.getRoot(), prefix, nodeCount);
+    }
+
+    void graficarNodosAVL(std::ofstream& file, const AVLNode* node, const std::string& prefix, int& nodeCount) const {
+        if (!node) return;
+
+        std::string nodeName = prefix + "_Nodo" + std::to_string(++nodeCount);
+        file << nodeName << " [label=\"{ " << node->activo.getNombre() << " | " << node->activo.getID() << " }\"];\n";
+
+        if (node->left) {
+            std::string leftChild = prefix + "_Nodo" + std::to_string(nodeCount + 1);
+            file << nodeName << " -> " << leftChild << ";\n";
+            graficarNodosAVL(file, node->left, prefix, nodeCount);
+        }
+
+        if (node->right) {
+            std::string rightChild = prefix + "_Nodo" + std::to_string(nodeCount + 1);
+            file << nodeName << " -> " << rightChild << ";\n";
+            graficarNodosAVL(file, node->right, prefix, nodeCount);
+        }
+    }
+
+    void printActivosDisponibles() const {
+        printDisponiblesRec(root);
+    }
+
+    void printDisponiblesRec(AVLNode* node) const {
+        if (!node) return;
+        printDisponiblesRec(node->left);
+        if (!node->activo.estaRentado()) { // Solo mostrar activos no rentados
+            std::cout << "ID: " << node->activo.getID()
+                      << ", Nombre: " << node->activo.getNombre()
+                      << ", Tiempo disponible: " << node->activo.getTiempo() << " días\n";
+        }
+        printDisponiblesRec(node->right);
+    }
 
 
 };

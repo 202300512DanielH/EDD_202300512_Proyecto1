@@ -11,11 +11,12 @@
 #include <iomanip>
 
 class Activo {
-private:
+public:
     std::string nombre;
     std::string descripcion;
     std::string id;
     int tiempo;
+    bool rentado;
 
     // Método para generar el ID único alfanumérico de 15 caracteres
     std::string generarIDUnico() {
@@ -32,13 +33,13 @@ private:
         return idStream.str();
     }
 
-public:
+
     // Constructor por defecto
     Activo() : nombre(""), descripcion(""), id(generarIDUnico()), tiempo(0) {}
 
     // Constructor parametrizado
     Activo(const std::string& nombre, const std::string& descripcion, int tiempo)
-        : nombre(nombre), descripcion(descripcion), id(generarIDUnico()), tiempo(tiempo) {}
+        : nombre(nombre), descripcion(descripcion), id(generarIDUnico()), tiempo(tiempo), rentado(false) {}
 
     // Getters
     std::string getNombre() const {
@@ -81,6 +82,12 @@ public:
                   << "ID: " << id << "\n"
                   << "Tiempo: " << tiempo << "\n";
     }
+
+    // Métodos en Activo.h
+    void marcarComoRentado() { rentado = true; }
+    void marcarComoNoRentado() { rentado = false; }
+    bool estaRentado() const { return rentado; }
+
 };
 
 #endif // ACTIVO_H

@@ -8,12 +8,15 @@
 #include <string>
 #include <iostream>
 #include "Usuario.h"
+#include "Lista_Circular_DobleEnlazada.h"
+#include "Transaccion.h"
 
 //Probando imprirmir la matriz en consola
 #include <iomanip>
 //probando imprimir la matriz en un archivo
 #include <fstream>
 
+DoublyCircular listaTransacciones;
 
 using namespace std;
 class ValorNodo{
@@ -167,7 +170,7 @@ public:
     }
 
 
-    Nodo* buscarFila(const string& empresa) {
+    Nodo* buscarFila(const string& empresa) const {
         Nodo* actual = raiz->abajo; // Comienza desde el primer encabezado de fila
         while (actual) {
             if (actual->i == empresa) {
@@ -178,7 +181,8 @@ public:
         return nullptr; // No se encontró la fila
     }
 
-    Nodo* buscarColumna(const string& departamento) {
+
+    Nodo* buscarColumna(const string& departamento) const {
         Nodo* actual = raiz->derecha; // Comienza desde el primer encabezado de columna
         while (actual) {
             if (actual->j == departamento) {
@@ -188,6 +192,7 @@ public:
         }
         return nullptr; // No se encontró la columna
     }
+
 
     Nodo* insertarEncabezadoFila(const string& empresa) {
         Nodo* nuevoEncabezado = new Nodo(empresa, ""); // Encabezado con nombre de empresa
@@ -286,6 +291,7 @@ public:
             nuevoNodoZ->anterior = actual;
         }
     }
+
 
 
     void imprimir() const {
@@ -473,6 +479,359 @@ public:
     }
 
 
+    void listarDepartamentos() const {
+        if (!raiz) {
+            std::cout << "No hay departamentos disponibles.\n";
+            return;
+        }
+
+        std::cout << "Departamentos disponibles:\n";
+        Nodo* columna = raiz->derecha; // Recorre las columnas (departamentos)
+        while (columna) {
+            std::cout << "- " << columna->j << "\n";
+            columna = columna->derecha;
+        }
+    }
+
+    void listarEmpresas() const {
+        if (!raiz) {
+            std::cout << "No hay empresas disponibles.\n";
+            return;
+        }
+
+        std::cout << "Empresas disponibles:\n";
+        Nodo* fila = raiz->abajo; // Recorre las filas (empresas)
+        while (fila) {
+            std::cout << "- " << fila->i << "\n";
+            fila = fila->abajo;
+        }
+    }
+
+
+    void graficarNodosAVL(std::ofstream& file, const AVLNode* node, const std::string& prefix, int& nodeCount) const {
+        if (!node) return;
+
+        std::string nodeName = prefix + "_Nodo" + std::to_string(++nodeCount);
+        file << nodeName << " [label=\"{ " << node->activo.getNombre() << " | " << node->activo.getID() << " }\"];\n";
+
+        if (node->left) {
+            std::string leftChild = prefix + "_Nodo" + std::to_string(nodeCount + 1);
+            file << nodeName << " -> " << leftChild << ";\n";
+            graficarNodosAVL(file, node->left, prefix, nodeCount);
+        }
+
+        if (node->right) {
+            std::string rightChild = prefix + "_Nodo" + std::to_string(nodeCount + 1);
+            file << nodeName << " -> " << rightChild << ";\n";
+            graficarNodosAVL(file, node->right, prefix, nodeCount);
+        }
+    }
+
+
+    void generarSubgrafoAVL(std::ofstream& file, const AVL& avl, const std::string& prefix) const {
+        if (avl.isEmpty()) { // Comprueba si el AVL está vacío
+            file << prefix << "_empty [label=\"(Sin activos)\", shape=plaintext];\n";
+            return;
+        }
+
+        int nodeCount = 0;
+        graficarNodosAVL(file, avl.getRoot(), prefix, nodeCount);
+    }
+
+
+    void generarReporteConsolidadoPorDepartamento(const std::string& departamento) const {
+    Nodo* columna = buscarColumna(departamento);
+    if (!columna) {
+        std::cout << "El departamento '" << departamento << "' no existe.\n";
+        return;
+    }
+
+    std::cout << "Generando reporte consolidado de activos para el departamento '" << departamento << "'...\n";
+
+    // Crear el archivo DOT
+    std::string dotFilename = "reporte_consolidado_" + departamento + ".dot";
+    std::string pngFilename = "reporte_consolidado_" + departamento + ".png";
+    std::ofstream file(dotFilename);
+
+    // Configurar el archivo DOT
+    file << "digraph G {\n";
+    file << "node [shape=record];\n";
+
+    Nodo* nodoActual = columna->abajo; // Empieza en el primer nodo de la columna
+    int contadorUsuario = 1;
+
+    while (nodoActual) {
+        Nodo* zNodo = nodoActual; // Recorre el eje Z
+        while (zNodo) {
+            if (zNodo->user) {
+                // Crear subgrafo para cada usuario
+                std::string subgraphName = "cluster_" + std::to_string(contadorUsuario);
+                file << "subgraph " << subgraphName << " {\n";
+                file << "label=\"Usuario: " << zNodo->user->getNombreUsuario() << "\";\n";
+
+                // Generar nodos del AVL
+                generarSubgrafoAVL(file, zNodo->user->getActivosAVL(), subgraphName);
+
+                file << "}\n";
+
+                contadorUsuario++;
+            }
+            zNodo = zNodo->siguiente; // Pasar al siguiente nodo en el eje Z
+        }
+        nodoActual = nodoActual->abajo; // Pasar al siguiente nodo en la columna
+    }
+
+    file << "}\n";
+    file.close();
+
+    // Generar la imagen PNG
+    std::string dotCommand = "dot -Tpng " + dotFilename + " -o " + pngFilename;
+    int result = system(dotCommand.c_str());
+    if (result != 0) {
+        std::cerr << "Error generando el reporte consolidado.\n";
+    } else {
+        std::cout << "Reporte consolidado generado exitosamente: " << pngFilename << "\n";
+    }
+}
+
+    void generarReporteConsolidadoPorEmpresa(const std::string& empresa) const {
+        Nodo* fila = buscarFila(empresa);
+        if (!fila) {
+            std::cout << "La empresa '" << empresa << "' no existe.\n";
+            return;
+        }
+
+        std::cout << "Generando reporte consolidado de activos para la empresa '" << empresa << "'...\n";
+
+        // Crear el archivo DOT
+        std::string dotFilename = "reporte_consolidado_" + empresa + ".dot";
+        std::string pngFilename = "reporte_consolidado_" + empresa + ".png";
+        std::ofstream file(dotFilename);
+
+        // Configurar el archivo DOT
+        file << "digraph G {\n";
+        file << "node [shape=record];\n";
+
+        Nodo* nodoActual = fila->derecha; // Empieza en el primer nodo de la fila
+        int contadorUsuario = 1;
+
+        while (nodoActual) {
+            Nodo* zNodo = nodoActual; // Recorre el eje Z
+            while (zNodo) {
+                if (zNodo->user) {
+                    // Crear subgrafo para cada usuario
+                    std::string subgraphName = "cluster_" + std::to_string(contadorUsuario);
+                    file << "subgraph " << subgraphName << " {\n";
+                    file << "label=\"Usuario: " << zNodo->user->getNombreUsuario() << "\";\n";
+
+                    // Generar nodos del AVL
+                    generarSubgrafoAVL(file, zNodo->user->getActivosAVL(), subgraphName);
+
+                    file << "}\n";
+
+                    contadorUsuario++;
+                }
+                zNodo = zNodo->siguiente; // Pasar al siguiente nodo en el eje Z
+            }
+            nodoActual = nodoActual->derecha; // Pasar al siguiente nodo en la fila
+        }
+
+        file << "}\n";
+        file.close();
+
+        // Generar la imagen PNG
+        std::string dotCommand = "dot -Tpng " + dotFilename + " -o " + pngFilename;
+        int result = system(dotCommand.c_str());
+        if (result != 0) {
+            std::cerr << "Error generando el reporte consolidado.\n";
+        } else {
+            std::cout << "Reporte consolidado generado exitosamente: " << pngFilename << "\n";
+        }
+    }
+
+    void listarActivosDeOtrosUsuarios(const std::string& nombreUsuarioActual) const {
+        if (!raiz) {
+            std::cout << "No hay activos disponibles.\n";
+            return;
+        }
+
+        std::cout << "=== Lista de activos de otros usuarios ===\n";
+        Nodo* fila = raiz->abajo;
+        while (fila) { // Recorrer filas
+            Nodo* columna = fila->derecha;
+            while (columna) { // Recorrer columnas
+                Nodo* zNodo = columna;
+                while (zNodo) { // Recorrer eje Z
+                    if (zNodo->user && zNodo->user->getNombreUsuario() != nombreUsuarioActual) {
+                        zNodo->user->getActivosAVL().printActivosDisponibles();
+                    }
+                    zNodo = zNodo->siguiente;
+                }
+                columna = columna->derecha;
+            }
+            fila = fila->abajo;
+        }
+    }
+
+
+    void rentarActivo(const std::string& nombreUsuarioRenta, const std::string& idActivo, int tiempoRenta) {
+    if (!raiz) {
+        std::cout << "No hay activos registrados.\n";
+        return;
+    }
+
+    Nodo* fila = raiz->abajo;
+    while (fila) { // Recorrer filas
+        Nodo* columna = fila->derecha;
+        while (columna) { // Recorrer columnas
+            Nodo* zNodo = columna;
+            while (zNodo) { // Recorrer eje Z
+                if (zNodo->user) {
+                    Activo* activo = zNodo->user->getActivosAVL().search(idActivo);
+                    if (activo) {
+                        if (zNodo->user->getNombreUsuario() == nombreUsuarioRenta) {
+                            std::cout << "No puedes rentar tu propio activo.\n";
+                            return;
+                        }
+
+                        // Validar tiempo
+                        if (tiempoRenta > activo->getTiempo()) {
+                            std::cout << "El tiempo de renta no puede exceder los " << activo->getTiempo() << " días asignados.\n";
+                            return;
+                        }
+
+                        // Crear transacción
+                        Transaccion transaccion(
+                            idActivo,
+                            nombreUsuarioRenta,
+                            zNodo->user->getDepartamento(),
+                            zNodo->user->getEmpresa(),
+                            tiempoRenta,
+                            "Renta"
+                        );
+
+                        // Agregar transacción a la lista global
+                        listaTransacciones.append(transaccion);
+
+                        // Actualizar tiempo restante del activo
+                        //activo->setTiempo(activo->getTiempo() - tiempoRenta);
+
+                        // Marcar el activo como rentado
+                        activo->marcarComoRentado();
+
+
+                        std::cout << "Activo rentado exitosamente.\n";
+                        std::cout << "Transacción:\n" << transaccion.toString();
+                        return;
+                    }
+                }
+                zNodo = zNodo->siguiente;
+            }
+            columna = columna->derecha;
+        }
+        fila = fila->abajo;
+    }
+    std::cout << "Activo con ID '" << idActivo << "' no encontrado.\n";
+}
+    void listarActivosRentadosPorUsuario(const std::string& nombreUsuario) const {
+        std::cout << "Activos rentados por '" << nombreUsuario << "':\n";
+
+        bool encontrado = false;
+        Node* temp = listaTransacciones.getHead(); // Recorrer la lista circular
+        if (temp == nullptr) {
+            std::cout << "No hay transacciones registradas.\n";
+            return;
+        }
+
+        do {
+            if (temp->data.getNombreUsuario() == nombreUsuario && temp->data.getTipoTransaccion() == "Renta") {
+                std::cout << "- ID Activo: " << temp->data.getIdActivo()
+                          << " | Fecha: " << temp->data.getFechaTransaccion() << "\n";
+                encontrado = true;
+            }
+            temp = temp->next;
+        } while (temp != listaTransacciones.getHead());
+
+        if (!encontrado) {
+            std::cout << "No has rentado ningún activo.\n";
+        }
+    }
+
+    void devolverActivo(const std::string& nombreUsuario, const std::string& idActivo) {
+        if (!raiz) {
+            std::cout << "No hay activos registrados.\n";
+            return;
+        }
+
+        Nodo* fila = raiz->abajo;
+        while (fila) {
+            Nodo* columna = fila->derecha;
+            while (columna) {
+                Nodo* zNodo = columna;
+                while (zNodo) {
+                    if (zNodo->user) {
+                        Activo* activo = zNodo->user->getActivosAVL().search(idActivo);
+                        if (activo && activo->estaRentado()) {
+                            // Validar transacción existente
+                            if (buscarTransaccionDeRenta(nombreUsuario, idActivo)) {
+                                // Marcar activo como no rentado
+                                activo->marcarComoNoRentado();
+
+                                // Crear nueva transacción de devolución
+                                Transaccion transaccion(
+                                    idActivo,
+                                    nombreUsuario,
+                                    zNodo->user->getDepartamento(),
+                                    zNodo->user->getEmpresa(),
+                                    0, // Tiempo devolución (no aplica)
+                                    "Devolución"
+                                );
+
+                                listaTransacciones.append(transaccion);
+
+                                std::cout << "Activo devuelto exitosamente.\n";
+                                std::cout << "Transacción de Devolución:\n" << transaccion.toString();
+                                return;
+                            } else {
+                                std::cout << "El activo no fue rentado por ti.\n";
+                                return;
+                            }
+                        }
+                    }
+                    zNodo = zNodo->siguiente;
+                }
+                columna = columna->derecha;
+            }
+            fila = fila->abajo;
+        }
+
+        std::cout << "Activo con ID '" << idActivo << "' no encontrado o no está rentado.\n";
+    }
+
+    bool buscarTransaccionDeRenta(const std::string& nombreUsuario, const std::string& idActivo) const {
+        Node* temp = listaTransacciones.getHead();
+        if (temp == nullptr) return false;
+
+        do {
+            if (temp->data.getNombreUsuario() == nombreUsuario &&
+                temp->data.getIdActivo() == idActivo &&
+                temp->data.getTipoTransaccion() == "Renta") {
+                return true; // Existe una transacción válida de tipo Renta
+                }
+            temp = temp->next;
+        } while (temp != listaTransacciones.getHead());
+
+        return false;
+    }
+
+
+
+
+
+
+
+
+
 
 
 void graph() const {
@@ -499,13 +858,13 @@ void graph() const {
             } else {
                 // Muestra el primer usuario en el eje Z o el usuario en el nodo actual
                 string content = "";
-                if (columnaAux->user) {
-                    content = columnaAux->user->nombreUsuario; // Usuario del nodo actual
-                }
                 if (columnaAux->siguiente && columnaAux->siguiente->user) {
-                    content = columnaAux->siguiente->user->nombreUsuario; // Usuario al frente en el eje Z
+                    content = columnaAux->siguiente->user->nombreUsuario; // Usuario adelante en el eje Z
+                } else if (columnaAux->user) {
+                    content = columnaAux->user->nombreUsuario; // Si no hay adelante, muestra el actual
                 }
                 nodeDec = name + "[label = \"" + content + "\"]";
+
             }
 
             file << nodeDec << endl;
@@ -538,8 +897,6 @@ void graph() const {
         cout << "Imagen generada exitosamente: matrix.png" << endl;
     }
 }
-
-
 
 };
 

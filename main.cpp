@@ -2,6 +2,7 @@
 #include <string>
 #include "Usuario.h"
 #include "MatrizDispersa.h"
+#include "Lista_Circular_DobleEnlazada.h"
 
 
 // Función para mostrar el menú del administrador
@@ -45,6 +46,51 @@ int main() {
 
     // Crear la matriz dispersa
     MatrizDispersa matriz;
+    // Crear la lista circular doble GLOBAL para las transacciones
+    extern DoublyCircular listaTransacciones;
+
+
+    // === Usuarios por defecto ===
+    Usuario* usuario1 = new Usuario("user1", "Usuario Uno", "pass1", "DepartamentoA", "EmpresaX");
+    Usuario* usuario2 = new Usuario("user2", "Usuario Dos", "pass2", "DepartamentoA", "EmpresaY");
+    Usuario* usuario3 = new Usuario("user3", "Usuario Tres", "pass3", "DepartamentoA", "EmpresaX");
+
+    // Agregar activos a los usuarios por defecto
+    usuario1->getActivosAVL().insert(Activo("NODEBERIA1", "Dell Inspiron 15", 10));
+    usuario1->getActivosAVL().insert(Activo("Mouse", "Logitech MX Master", 20));
+
+    usuario2->getActivosAVL().insert(Activo("NODEBERIA2", "Epson X10", 20));
+    usuario2->getActivosAVL().insert(Activo("Teclado", "Mechanical RGB", 20));
+
+    usuario3->getActivosAVL().insert(Activo("Monitor", "LG 27\"", 30));
+    usuario3->getActivosAVL().insert(Activo("Laptop", "Macbook Pro 13\"", 30));
+
+    // Insertar usuarios en la matriz
+    matriz.insert(usuario1->getEmpresa(), usuario1->getDepartamento(), usuario1);
+    matriz.insert(usuario2->getEmpresa(), usuario2->getDepartamento(), usuario2);
+    matriz.insert(usuario3->getEmpresa(), usuario3->getDepartamento(), usuario3);
+/*
+    Usuario* usuario1 = new Usuario("casimiro","Elian Estrada","1234","guatemala","igss");
+    Usuario* usuario2 = new Usuario("juanito","Juan Perez","4567","jutiapa","max");
+    Usuario* usuario3 = new Usuario("pedrito","Pedro Rodriguez","48956","jalapa","usac");
+    Usuario* usuario4 = new Usuario("mafer","Maria Fernanda","54312","peten","cinepolis");
+    Usuario* usuario5 = new Usuario("juanma","Juan Manuel","32897","guatemala","usac");
+    Usuario* usuario6 = new Usuario("casimiro","Carlos Perez","721896","guatemala","max");
+    Usuario* usuario7 = new Usuario("fuego03","Fernando Mendez","891346","jutiapa","cinepolis");
+    Usuario* usuario8 = new Usuario("azurdia","Alejandra Guzman","780145","jutiapa","usac");
+    Usuario* usuario9 = new Usuario("incrediboy","Iraldo Martinez","201598","jutiapa","max");
+    //Usuario* usuario10 = new Usuario("alcachofa","Antonio Lopez","20435","jalapa","usac");
+
+    matriz.insert(usuario1->getEmpresa(), usuario1->getDepartamento(), usuario1);
+    matriz.insert(usuario2->getEmpresa(), usuario2->getDepartamento(), usuario2);
+    matriz.insert(usuario3->getEmpresa(), usuario3->getDepartamento(), usuario3);
+    matriz.insert(usuario4->getEmpresa(), usuario4->getDepartamento(), usuario4);
+    matriz.insert(usuario5->getEmpresa(), usuario5->getDepartamento(), usuario5);
+    matriz.insert(usuario6->getEmpresa(), usuario6->getDepartamento(), usuario6);
+    matriz.insert(usuario7->getEmpresa(), usuario7->getDepartamento(), usuario7);
+    matriz.insert(usuario8->getEmpresa(), usuario8->getDepartamento(), usuario8);
+    matriz.insert(usuario9->getEmpresa(), usuario9->getDepartamento(), usuario9);*/
+    //matriz.insert(usuario10->getEmpresa(), usuario10->getDepartamento(), usuario10);
 
     bool salir = false;
 
@@ -140,6 +186,41 @@ int main() {
                         matriz.imprimir();
                         matriz.graph();
                     break;
+                case 5:{
+                        std::cout << "=== Reporte Consolidado por Departamento ===\n";
+
+                        // Listar departamentos disponibles
+                        matriz.listarDepartamentos();
+
+                        // Solicitar el nombre del departamento
+                        std::string departamento;
+                        std::cout << "Ingrese el nombre del departamento para generar el reporte : ";
+                        std::cin >> departamento;
+
+                        // Generar el reporte consolidado
+                        matriz.generarReporteConsolidadoPorDepartamento(departamento);
+                        break;
+                }
+                case 6: { // Generar reporte por empresa
+                        std::cout << "=== Generar Reporte por Empresa ===\n";
+                        matriz.listarEmpresas(); // Muestra las empresas disponibles
+
+                        std::string empresa;
+                        std::cout << "Ingrese el nombre de la empresa: ";
+                        std::cin.ignore();
+                        std::getline(std::cin, empresa);
+
+                        matriz.generarReporteConsolidadoPorEmpresa(empresa);
+                        break;
+                }
+                case 7: { // Opción para generar reporte de transacciones
+                        std::cout << "=== Generar Reporte de Transacciones ===\n";
+                        std::string filename = "reporte_transacciones";
+                        listaTransacciones.graph(filename);
+                        break;
+                }
+
+
                 case 8: {
                         std::cout << "=== Reporte de Activos de un Usuario ===\n";
 
@@ -239,6 +320,33 @@ int main() {
                                 std::cout << "No se pudo realizar la modificación.\n";
                             }
 
+                            break;
+                    }
+                    case 4: {
+                            std::string idActivo;
+                            int tiempoRenta;
+                            std::cout << "=== Rentar Activo ===\n";
+
+                            // Mostrar los activos disponibles
+                            std::cout << "Activos disponibles:\n";
+                            matriz.listarActivosDeOtrosUsuarios( usuarioActual->getNombreUsuario() );
+                            std::cout << "Ingrese el ID del activo que desea rentar: ";
+                            std::cin >> idActivo;
+                            std::cout << "Ingrese el tiempo de renta (en días): ";
+                            std::cin >> tiempoRenta;
+                            matriz.rentarActivo(usuarioActual->getNombreUsuario(), idActivo, tiempoRenta);
+                            break;
+
+                    }
+                    case 5: { // Mostrar activos rentados y devolver
+                            std::cout << "=== Activos Rentados ===\n";
+                            matriz.listarActivosRentadosPorUsuario(usuarioActual->getNombreUsuario());
+
+                            std::string idActivo;
+                            std::cout << "Ingrese el ID del activo que desea devolver: ";
+                            std::cin >> idActivo;
+
+                            matriz.devolverActivo(usuarioActual->getNombreUsuario(), idActivo);
                             break;
                     }
 

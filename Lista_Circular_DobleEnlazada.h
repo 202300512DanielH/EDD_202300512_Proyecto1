@@ -114,6 +114,125 @@ public:
         cout << "head" << endl;
     }
 
+    void generarReporteRentasPorUsuario(const std::string& nombreUsuario) const {
+        if (!head) {
+            std::cout << "No hay transacciones registradas.\n";
+            return;
+        }
+
+        std::string dotFilename = "reporte_rentas_" + nombreUsuario + ".dot";
+        std::string pngFilename = "reporte_rentas_" + nombreUsuario + ".png";
+
+        std::ofstream file(dotFilename);
+        if (!file) {
+            std::cerr << "Error al crear el archivo DOT.\n";
+            return;
+        }
+
+        file << "digraph RentasUsuario {\n";
+        file << "node [shape=record, style=filled, color=lightblue];\n";
+
+        Node* temp = head;
+        int id = 0;
+
+        // Recorre la lista circular doblemente enlazada
+        do {
+            if (temp->data.getTipoTransaccion() == "Renta" && temp->data.getNombreUsuario() == nombreUsuario) {
+                file << "node" << id << " [label=\"{ID Transaccion: " << temp->data.getIdTransaccion()
+                     << "| ID Activo: " << temp->data.getIdActivo()
+                     << "| Empresa: " << temp->data.getEmpresa()
+                     << "| Departamento: " << temp->data.getDepartamento()
+                     << "| Fecha: " << temp->data.getFechaTransaccion()
+                     << "| Tiempo Renta: " << temp->data.getTiempoRenta() << " días}\"];\n";
+
+                // Conexión de nodos
+                if (temp->next != head) {
+                    file << "node" << id << " -> node" << (id + 1) << " [dir=both];\n";
+                }
+                id++;
+            }
+            temp = temp->next;
+        } while (temp != head);
+
+        // Conexión circular final
+        if (id > 1) {
+            file << "node" << (id - 1) << " -> node0 [dir=both];\n";
+        }
+
+        file << "}\n";
+        file.close();
+
+        // Generar imagen usando Graphviz
+        std::string command = "dot -Tpng " + dotFilename + " -o " + pngFilename;
+        int result = system(command.c_str());
+        if (result == 0) {
+            std::cout << "Reporte generado exitosamente: " << pngFilename << "\n";
+        } else {
+            std::cerr << "Error al generar el reporte de transacciones.\n";
+        }
+    }
+
+    void ordenarAscendente() {
+        if (!head || head->next == head) return; // Lista vacía o con un solo elemento
+
+        bool swapped;
+        Node* temp;
+        Node* lastSorted = nullptr; // Marcador del último nodo ordenado
+
+        do {
+            swapped = false;
+            temp = head;
+
+            do {
+                Node* nextNode = temp->next;
+
+                // Comparar ID actual y el siguiente nodo
+                if (nextNode != head && temp->data.getIdTransaccion() > nextNode->data.getIdTransaccion()) {
+                    std::swap(temp->data, nextNode->data); // Intercambiar datos
+                    swapped = true;
+                }
+
+                temp = temp->next;
+            } while (temp->next != head && temp != lastSorted);
+
+            lastSorted = temp; // Actualizar último nodo ordenado
+        } while (swapped);
+
+        std::cout << "Lista ordenada ascendentemente por ID de transacción.\n";
+    }
+
+    void ordenarDescendente() {
+        if (!head || head->next == head) return; // Lista vacía o con un solo elemento
+
+        bool swapped;
+        Node* temp;
+        Node* lastSorted = nullptr; // Marcador del último nodo ordenado
+
+        do {
+            swapped = false;
+            temp = head;
+
+            do {
+                Node* nextNode = temp->next;
+
+                // Comparar ID actual y el siguiente nodo
+                if (nextNode != head && temp->data.getIdTransaccion() < nextNode->data.getIdTransaccion()) {
+                    std::swap(temp->data, nextNode->data); // Intercambiar datos
+                    swapped = true;
+                }
+
+                temp = temp->next;
+            } while (temp->next != head && temp != lastSorted);
+
+            lastSorted = temp; // Actualizar último nodo ordenado
+        } while (swapped);
+
+        std::cout << "Lista ordenada descendentemente por ID de transacción.\n";
+    }
+
+
+
+
     void graph(const std::string& filename) {
         if (!head) {
             std::cout << "No hay transacciones registradas para generar el reporte.\n";

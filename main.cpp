@@ -17,8 +17,9 @@ void menuAdministrador() {
     std::cout << "7. Reporte de Transacciones\n";
     std::cout << "8. Reporte de Activos de un Usuario\n";
     std::cout << "9. Activos Rentados por un Usuario\n";
-    std::cout << "10. Ordenar Transacciones\n";
-    std::cout << "11. Salir\n";
+    std::cout << "10. Ordenar Transacciones ascendentemente\n";
+    std::cout << "11. Ordenar Transacciones Descendentemente\n";
+    std::cout << "12. Salir\n";
     std::cout << "Seleccione una opcion: ";
 }
 
@@ -50,27 +51,26 @@ int main() {
     extern DoublyCircular listaTransacciones;
 
 
-    // === Usuarios por defecto ===
+/*
+ *USUARIOS QUE USÉ PARA PROBAR EL PROGRAMA
     Usuario* usuario1 = new Usuario("user1", "Usuario Uno", "pass1", "DepartamentoA", "EmpresaX");
     Usuario* usuario2 = new Usuario("user2", "Usuario Dos", "pass2", "DepartamentoA", "EmpresaY");
     Usuario* usuario3 = new Usuario("user3", "Usuario Tres", "pass3", "DepartamentoA", "EmpresaX");
 
-    // Agregar activos a los usuarios por defecto
     usuario1->getActivosAVL().insert(Activo("NODEBERIA1", "Dell Inspiron 15", 10));
     usuario1->getActivosAVL().insert(Activo("Mouse", "Logitech MX Master", 20));
-
     usuario2->getActivosAVL().insert(Activo("NODEBERIA2", "Epson X10", 20));
     usuario2->getActivosAVL().insert(Activo("Teclado", "Mechanical RGB", 20));
-
     usuario3->getActivosAVL().insert(Activo("Monitor", "LG 27\"", 30));
     usuario3->getActivosAVL().insert(Activo("Laptop", "Macbook Pro 13\"", 30));
 
-    // Insertar usuarios en la matriz
     matriz.insert(usuario1->getEmpresa(), usuario1->getDepartamento(), usuario1);
     matriz.insert(usuario2->getEmpresa(), usuario2->getDepartamento(), usuario2);
     matriz.insert(usuario3->getEmpresa(), usuario3->getDepartamento(), usuario3);
-/*
-    Usuario* usuario1 = new Usuario("casimiro","Elian Estrada","1234","guatemala","igss");
+
+    */
+
+    Usuario* usuario1 = new Usuario("elian_estrada","Elian Estrada","1234","guatemala","igss");
     Usuario* usuario2 = new Usuario("juanito","Juan Perez","4567","jutiapa","max");
     Usuario* usuario3 = new Usuario("pedrito","Pedro Rodriguez","48956","jalapa","usac");
     Usuario* usuario4 = new Usuario("mafer","Maria Fernanda","54312","peten","cinepolis");
@@ -79,7 +79,33 @@ int main() {
     Usuario* usuario7 = new Usuario("fuego03","Fernando Mendez","891346","jutiapa","cinepolis");
     Usuario* usuario8 = new Usuario("azurdia","Alejandra Guzman","780145","jutiapa","usac");
     Usuario* usuario9 = new Usuario("incrediboy","Iraldo Martinez","201598","jutiapa","max");
-    //Usuario* usuario10 = new Usuario("alcachofa","Antonio Lopez","20435","jalapa","usac");
+    Usuario* usuario10 = new Usuario("alcachofa","Antonio Lopez","20435","jalapa","usac");
+
+    usuario1->getActivosAVL().insert(Activo("madera", "madera para albañil", 20));
+    usuario1->getActivosAVL().insert(Activo("martillos", "martillos para madera", 10));
+    usuario1->getActivosAVL().insert(Activo("caladora", "caladora para cortar maderas prefabricadas", 15));
+    usuario1->getActivosAVL().insert(Activo("barreno", "barreno para concreto", 5));
+
+    usuario6->getActivosAVL().insert(Activo("balanza", "balanza con maximo de 25kg", 15));
+    usuario6->getActivosAVL().insert(Activo("canastas", "canastas para frutas y verduras", 45));
+    usuario6->getActivosAVL().insert(Activo("linternas", "linternas para alumbrar cuartos oscuros", 10));
+    usuario6->getActivosAVL().insert(Activo("cargadores", "cargadores de telefonos tipo c", 5));
+    usuario6->getActivosAVL().insert(Activo("cables", "cables de todo tipo", 10));
+    usuario6->getActivosAVL().insert(Activo("lazos", "lazos para tender ropa", 20));
+
+    usuario7->getActivosAVL().insert(Activo("termos", "termos pequeños para bebidas calientes", 10));
+    usuario7->getActivosAVL().insert(Activo("maletas", "maletas desde pequeñas a grandes", 15));
+    usuario7->getActivosAVL().insert(Activo("peliculas", "todo tipo de peliculas de accion", 5));
+
+    usuario9->getActivosAVL().insert(Activo("incrediboy casest", "casets con musica de todo tipo", 5));
+    usuario9->getActivosAVL().insert(Activo("pantallas", "pantallas para proyección", 10));
+    usuario9->getActivosAVL().insert(Activo("cañonera", "cañonera para proyeccion", 10));
+    usuario9->getActivosAVL().insert(Activo("toldo", "toldo para eventos al exterior", 5));
+
+    usuario4->getActivosAVL().insert(Activo("audifonos", "audifonos para grabaciones de estudio", 10));
+    usuario4->getActivosAVL().insert(Activo("microfonos", "microfonos de todo tipo", 8));
+    usuario4->getActivosAVL().insert(Activo("pedestales", "pedestales para microfonos grandes y pequeños", 12));
+    usuario4->getActivosAVL().insert(Activo("atriles", "atriles para colocar ojas con gancho", 14));
 
     matriz.insert(usuario1->getEmpresa(), usuario1->getDepartamento(), usuario1);
     matriz.insert(usuario2->getEmpresa(), usuario2->getDepartamento(), usuario2);
@@ -89,8 +115,8 @@ int main() {
     matriz.insert(usuario6->getEmpresa(), usuario6->getDepartamento(), usuario6);
     matriz.insert(usuario7->getEmpresa(), usuario7->getDepartamento(), usuario7);
     matriz.insert(usuario8->getEmpresa(), usuario8->getDepartamento(), usuario8);
-    matriz.insert(usuario9->getEmpresa(), usuario9->getDepartamento(), usuario9);*/
-    //matriz.insert(usuario10->getEmpresa(), usuario10->getDepartamento(), usuario10);
+    matriz.insert(usuario9->getEmpresa(), usuario9->getDepartamento(), usuario9);
+    matriz.insert(usuario10->getEmpresa(), usuario10->getDepartamento(), usuario10);
 
     bool salir = false;
 
@@ -237,15 +263,36 @@ int main() {
 
                         break;
                 }
+                case 9: {
+                        matriz.listarUsuarios();
+                        std::cout << "=== Generar Reporte de Activos Rentados por Usuario ===\n";
+                        std::string nombreUsuario;
+                        std::cout << "Ingrese el nombre del usuario: ";
+                        std::cin >> nombreUsuario;
 
-                    case 11:
+                        matriz.generarReporteRentasPorUsuario(nombreUsuario);
+                        break;
+                }
+                case 10: { // Ordenar transacciones ascendentemente
+                        std::cout << "Ordenando transacciones ascendentemente por ID\n";
+                        listaTransacciones.ordenarAscendente();
+                        break;
+                }
+
+                case 11: { // Ordenar transacciones descendentemente
+                        std::cout << "Ordenando transacciones descendentemente por ID\n";
+                        listaTransacciones.ordenarDescendente();
+                        break;
+                }
+
+                    case 12:
                         std::cout << "Saliendo del menu administrador...\n";
                         break;
 
                     default:
                         std::cout << "Opción inválida. Intente de nuevo.\n";
                 }
-            } while (opcion != 11);
+            } while (opcion != 12);
         } else {
             // Buscar usuario en la matriz
             Usuario* usuario = matriz.buscarUsuario(username, password);

@@ -834,6 +834,12 @@ public:
         usuario->listarMisActivosRentados();
     }
 
+    void generarReporteRentasPorUsuario(const std::string& nombreUsuario) const {
+        std::cout << "Generando reporte de activos rentados por el usuario '" << nombreUsuario << "'...\n";
+        listaTransacciones.generarReporteRentasPorUsuario(nombreUsuario);
+    }
+
+
 
 
 
